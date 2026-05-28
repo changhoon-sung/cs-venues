@@ -1,10 +1,8 @@
 # CS Venues
 
-A lightweight static web app for browsing computer science conference deadlines
-and rankings.
+A lightweight static web app for browsing computer science conference deadlines and rankings.
 
-Data is sourced from the CCFDDL dataset in `data/ccfddl/`.
-The build step generates `public/data/conferences.json` from those YAML files.
+The committed dataset is refreshed weekly from upstream [CCFDDL](https://github.com/ccfddl/ccf-deadlines).
 
 ## Development
 
@@ -34,3 +32,7 @@ Upstream CCFDDL sync runs separately once a week through GitHub Actions.
 - `data/ccfddl/accept_rates/`: historical acceptance rates
 - `scripts/build-dataset.mjs`: YAML to static JSON generator
 - `scripts/sync-dataset.mjs`: sparse sync from upstream CCFDDL
+
+## Acknowledgement
+
+Conference data is based on the [CCFDDL dataset](https://github.com/ccfddl/ccf-deadlines).
