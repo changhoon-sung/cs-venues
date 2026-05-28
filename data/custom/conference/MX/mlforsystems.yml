@@ -1,0 +1,18 @@
+- title: ML for Systems
+  description: Machine Learning for Systems Workshop
+  sub: MX
+  rank:
+    ccf: N
+    core: N
+    thcpl: N
+  dblp: ""
+  confs:
+    - year: 2025
+      id: mlforsystems2025
+      link: https://mlforsystems.org/call_for_papers.html
+      timeline:
+        - deadline: '2025-08-29 23:59:59'
+          comment: Submission Deadline
+      timezone: AoE
+      date: December 6, 2025
+      place: San Diego, California, USA
