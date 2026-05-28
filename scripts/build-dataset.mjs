@@ -4,16 +4,22 @@ import { parse } from "yaml";
 import { globSync, statSync } from "node:fs";
 
 const root = process.cwd();
-const dataRoot = "data/ccfddl";
-const conferenceRoot = `${dataRoot}/conference`;
-const acceptRatesRoot = `${dataRoot}/accept_rates`;
-const files = globSync(`${conferenceRoot}/**/*.yml`, {
-  cwd: root,
-  exclude: [`${conferenceRoot}/types.yml`],
-}).sort();
-const acceptRateFiles = globSync(`${acceptRatesRoot}/**/*`, {
-  cwd: root,
-})
+const dataRoots = ["data/ccfddl", "data/custom"];
+const files = dataRoots
+  .flatMap((dataRoot) => {
+    const conferenceRoot = `${dataRoot}/conference`;
+    return globSync(`${conferenceRoot}/**/*.yml`, {
+      cwd: root,
+      exclude: [`${conferenceRoot}/types.yml`],
+    });
+  })
+  .sort();
+const acceptRateFiles = dataRoots
+  .flatMap((dataRoot) =>
+    globSync(`${dataRoot}/accept_rates/**/*`, {
+      cwd: root,
+    }),
+  )
   .filter((file) => statSync(join(root, file)).isFile())
   .sort();
 const acceptRates = await readAcceptRates();
