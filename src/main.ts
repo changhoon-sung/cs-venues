@@ -136,7 +136,7 @@ if (headerOrnamentCanvas instanceof HTMLCanvasElement) {
 void initialize();
 
 async function initialize(): Promise<void> {
-  const response = await fetch("/data/conferences.json");
+  const response = await fetch(`${import.meta.env.BASE_URL}data/conferences.json`);
   if (!response.ok) {
     throw new Error(`Failed to load dataset: ${response.status}`);
   }
