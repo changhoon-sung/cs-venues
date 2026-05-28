@@ -1,0 +1,43 @@
+name: Sync CCFDDL Data
+
+on:
+  schedule:
+    - cron: "0 18 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync upstream dataset
+        run: npm run data:sync
+
+      - name: Validate build
+        run: npm run build
+
+      - name: Commit dataset updates
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/ccfddl
+          if git diff --cached --quiet; then
+            echo "No dataset changes."
+          else
+            git commit -m "Sync CCFDDL dataset"
+            git push
+          fi

@@ -1,0 +1,963 @@
+:root {
+  color-scheme: light;
+  --bg: rgb(247 245 244);
+  --paper: rgb(255 255 255);
+  --ink: rgb(35 34 34);
+  --muted: rgb(112 110 109);
+  --rule: rgb(238 235 234);
+  --accent: rgb(63 93 179);
+  --accent-soft: rgb(250 249 248);
+  --favorite: rgb(217 121 23);
+  --deadline-far: rgb(14 98 69);
+  --soon: rgb(152 55 5);
+  --soon-soft: rgb(250 249 248);
+  --closed: rgb(112 110 109);
+  --unknown: rgb(152 55 5);
+  font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: rgb(24 23 23);
+  --paper: rgb(31 30 30);
+  --ink: rgb(247 245 244);
+  --muted: rgb(175 172 171);
+  --rule: rgb(46 45 45);
+  --accent: rgb(108 148 236);
+  --accent-soft: rgb(46 45 45);
+  --favorite: rgb(217 121 23);
+  --deadline-far: rgb(30 166 114);
+  --soon: rgb(217 121 23);
+  --soon-soft: rgb(46 45 45);
+  --closed: rgb(175 172 171);
+  --unknown: rgb(217 121 23);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+}
+
+a {
+  color: inherit;
+  text-decoration-color: color-mix(in srgb, currentColor 45%, transparent);
+  text-underline-offset: 0.18em;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.shell {
+  width: min(1480px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 48px;
+}
+
+.site-header {
+  position: relative;
+  border-bottom: 1px solid var(--rule);
+  margin-bottom: 14px;
+}
+
+.header-ornament {
+  position: absolute;
+  top: 0; /* top / height / width set in JS: right-aligned to the hero block */
+  right: 0;
+  z-index: 0;
+  pointer-events: auto;
+  cursor: pointer; /* whole rain box toggles pause */
+}
+
+.ornament-pause {
+  position: absolute;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1;
+  opacity: 0;
+  transition: opacity 140ms ease, color 140ms ease;
+  pointer-events: none; /* purely an indicator; clicks go through to the canvas */
+}
+
+/* show the icon when the rain box is hovered, or while paused */
+.header-ornament:hover + .ornament-pause,
+.ornament-pause.is-paused {
+  opacity: 0.85;
+}
+
+.header-ornament:hover + .ornament-pause {
+  color: var(--ink);
+}
+
+/* the ▶ glyph renders heavier than ⏸ in most fonts — trim it visually */
+.ornament-pause.is-paused {
+  font-size: 11px;
+}
+
+.top-nav,
+.hero {
+  position: relative;
+  z-index: 1;
+}
+
+.hero h1,
+.hero .lede {
+  text-shadow: 0 0 18px var(--bg), 0 0 8px var(--bg);
+}
+
+@media (max-width: 900px) {
+  .header-ornament,
+  .ornament-pause {
+    display: none;
+  }
+  /* ornament hidden on mobile — reclaim the right padding for the copy */
+  .hero {
+    padding-right: 0;
+  }
+}
+
+.top-nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  min-height: 38px;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
+}
+
+.brand {
+  margin-right: auto;
+  font-weight: 700;
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.theme-toggle,
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  padding: 0;
+  cursor: pointer;
+}
+
+.icon-button {
+  text-decoration: none;
+}
+
+.theme-toggle svg,
+.icon-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icon-button svg {
+  width: 17px;
+  height: 17px;
+  fill: currentColor;
+  stroke: none;
+}
+
+.hero {
+  width: fit-content; /* shrink to visible content so it doesn't block the ornament */
+  max-width: 900px;
+  /* right padding leaves a real gap between the copy and the rain ornament;
+     dropped at mobile widths below since the ornament hides there anyway. */
+  padding: 26px 80px 24px 0;
+}
+
+.hero-copy {
+  border-left: 3px solid var(--accent);
+  padding-left: 18px;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.1;
+  letter-spacing: 0;
+  font-weight: 500;
+}
+
+.mobile-title {
+  display: none;
+}
+
+.lede {
+  max-width: 680px;
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.deadline-sentence {
+  display: block;
+}
+
+.author-note {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+}
+
+.author-note a {
+  color: var(--accent);
+}
+
+.references {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin-top: 16px;
+  color: var(--muted);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+}
+
+.references h2 {
+  width: auto;
+  margin: 0;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.references a {
+  color: var(--accent);
+}
+
+.references h2::after {
+  content: ":";
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr);
+  gap: 10px;
+  align-items: end;
+  margin: 20px 0 14px;
+}
+
+label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+  font-weight: 650;
+  text-transform: uppercase;
+}
+
+input,
+select {
+  height: 34px;
+  border: 1px solid var(--rule);
+  border-radius: 0;
+  background: var(--paper);
+  color: var(--ink);
+  padding: 0 10px;
+}
+
+.filter-groups {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) max-content;
+  gap: 12px;
+  margin: 0 0 14px;
+}
+
+fieldset {
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--rule);
+  padding: 10px;
+}
+
+legend {
+  padding: 0 5px;
+  color: var(--muted);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.check-grid,
+.check-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.check-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--rule);
+  padding: 4px 7px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.check-pill input {
+  width: 13px;
+  height: 13px;
+  margin: 0;
+}
+
+.meta-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 10px 0;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+}
+
+.table-frame {
+  overflow-x: auto;
+  background: var(--paper);
+  border: 1px solid var(--rule);
+}
+
+table {
+  width: 100%;
+  min-width: 1040px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.col-title {
+  width: 520px;
+}
+
+.col-deadline {
+  width: 300px;
+}
+
+.col-event {
+  width: 220px;
+}
+
+th,
+td {
+  border-bottom: 1px solid var(--rule);
+  padding: 11px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: color-mix(in srgb, var(--paper) 92%, var(--bg));
+  color: var(--muted);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.th-note {
+  margin-top: 3px;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  text-transform: none;
+}
+
+th button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+  text-transform: inherit;
+}
+
+th button.active {
+  color: var(--ink);
+}
+
+.sort-arrow {
+  display: inline-block;
+  width: 1em;
+  margin-left: 4px;
+}
+
+tbody tr:hover {
+  background: color-mix(in srgb, var(--paper) 86%, var(--accent-soft));
+}
+
+.venue-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+}
+
+.venue-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 18px;
+  line-height: 1.2;
+  font-weight: 520;
+}
+
+.venue-link {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.venue-link:hover {
+  color: var(--accent);
+}
+
+.favorite {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: color-mix(in srgb, var(--muted) 58%, transparent);
+  margin: -4px;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.favorite svg {
+  display: block;
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+}
+
+.favorite:hover,
+.favorite:focus-visible {
+  color: var(--favorite);
+  outline: none;
+}
+
+.favorite.active {
+  color: var(--favorite);
+}
+
+.favorite.active svg {
+  fill: currentColor;
+}
+
+.venue-tags {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  color: var(--muted);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 11px;
+}
+
+.area-label {
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--muted);
+  padding: 1px 5px;
+  cursor: pointer;
+}
+
+.acceptance-rate {
+  border: 1px solid var(--rule);
+  background: var(--paper);
+  color: var(--muted);
+  padding: 1px 5px;
+  text-decoration: none;
+}
+
+.acceptance-rate:hover {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 38%, var(--rule));
+}
+
+.venue-desc,
+.muted,
+.venue-note {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.venue-note {
+  color: var(--ink);
+}
+
+.mono,
+.rank,
+.remaining {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.rank {
+  display: inline-block;
+  min-width: 0;
+  border: 0;
+  padding: 2px 5px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  text-align: center;
+  cursor: pointer;
+}
+
+.remaining {
+  display: inline-block;
+  min-width: 20ch;
+  padding: 0;
+  white-space: pre;
+  color: var(--deadline-far);
+  font-size: 14px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: left;
+}
+
+.remaining.soon {
+  color: var(--soon);
+}
+
+.remaining.closed {
+  color: var(--closed);
+}
+
+.remaining.unknown {
+  color: var(--unknown);
+}
+
+.deadline-cell {
+  display: grid;
+  gap: 4px;
+}
+
+.deadline-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.calendar-button {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 0;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.calendar-button:hover,
+.calendar-button:focus-visible {
+  color: var(--accent);
+  outline: none;
+}
+
+.calendar-button svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.deadline-local {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  color: var(--ink);
+}
+
+.deadline-meta {
+  color: var(--muted);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.favorite-venues {
+  margin: 0 0 16px;
+  border: 1px solid color-mix(in srgb, var(--favorite) 42%, var(--rule));
+  background: var(--paper);
+}
+
+.favorite-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--favorite) 28%, var(--rule));
+  padding: 7px 10px;
+  color: color-mix(in srgb, var(--favorite) 74%, var(--ink));
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.favorite-header:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.favorite-collapse {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: inherit;
+}
+
+.favorite-collapse-icon {
+  display: inline-block;
+  width: 1em;
+  color: var(--muted);
+}
+
+.favorite-count {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.favorite-layout-toggle {
+  display: inline-flex;
+  border: 1px solid color-mix(in srgb, var(--favorite) 24%, var(--rule));
+}
+
+.favorite-layout-toggle.hidden,
+.favorite-table-frame.hidden {
+  display: none;
+}
+
+.favorite-layout-toggle button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  padding: 2px 6px;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+  text-transform: none;
+}
+
+.favorite-layout-toggle button + button {
+  border-left: 1px solid color-mix(in srgb, var(--favorite) 24%, var(--rule));
+}
+
+.favorite-layout-toggle button.active {
+  background: color-mix(in srgb, var(--favorite) 12%, var(--paper));
+  color: color-mix(in srgb, var(--favorite) 74%, var(--ink));
+}
+
+.favorite-table-frame {
+  border: 0;
+  background: var(--paper);
+}
+
+.favorite-venues table,
+.favorite-venues th,
+.favorite-venues td {
+  background: var(--paper);
+}
+
+.favorite-group-row td {
+  padding: 7px 10px;
+  background: color-mix(in srgb, var(--favorite) 7%, var(--paper));
+  color: color-mix(in srgb, var(--favorite) 70%, var(--muted));
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+@media (max-width: 900px) {
+  .shell {
+    width: min(100% - 20px, 1480px);
+    padding-top: 12px;
+  }
+
+  .hero {
+    padding: 34px 0 30px;
+  }
+
+  .toolbar {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .filter-groups {
+    grid-template-columns: 1fr;
+  }
+
+  .meta-line {
+    display: block;
+  }
+}
+
+@media (max-width: 640px) {
+  .shell {
+    width: min(100% - 16px, 1480px);
+    padding-bottom: 28px;
+  }
+
+  .top-nav {
+    min-height: 42px;
+  }
+
+  .hero {
+    padding: 24px 0 22px;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+  }
+
+  h1 {
+    font-size: 34px;
+  }
+
+  .desktop-title {
+    display: none;
+  }
+
+  .mobile-title {
+    display: inline;
+  }
+
+  .lede {
+    margin-top: 12px;
+    font-size: 16px;
+  }
+
+  .deadline-sentence {
+    display: inline;
+  }
+
+  .author-note {
+    display: inline;
+    margin-top: 0;
+  }
+
+  .references {
+    gap: 8px 12px;
+    margin-top: 16px;
+  }
+
+  .toolbar {
+    grid-template-columns: 1fr;
+    margin-top: 14px;
+  }
+
+  input,
+  select {
+    width: 100%;
+  }
+
+  fieldset {
+    padding: 9px;
+  }
+
+  .check-grid,
+  .check-row {
+    gap: 5px;
+  }
+
+  .check-pill {
+    padding: 4px 6px;
+    font-size: 11px;
+  }
+
+  .table-frame {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+  }
+
+  table,
+  thead,
+  tbody,
+  tr,
+  th,
+  td {
+    display: block;
+  }
+
+  table {
+    min-width: 0;
+  }
+
+  colgroup {
+    display: none;
+  }
+
+  thead {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    margin-bottom: 8px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+  }
+
+  thead tr {
+    display: flex;
+    align-items: stretch;
+  }
+
+  th {
+    position: static;
+    flex: 1;
+    border: 0;
+    padding: 8px 10px;
+    background: transparent;
+  }
+
+  th:nth-child(3) {
+    display: none;
+  }
+
+  th + th {
+    border-left: 1px solid var(--rule);
+  }
+
+  .th-note {
+    font-size: 10px;
+  }
+
+  tbody {
+    display: grid;
+    gap: 10px;
+  }
+
+  tbody tr {
+    border: 1px solid var(--rule);
+    background: var(--paper);
+  }
+
+  td {
+    border: 0;
+    padding: 10px;
+  }
+
+  td + td {
+    border-top: 1px solid var(--rule);
+  }
+
+  td:nth-child(2)::before,
+  td:nth-child(3)::before {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--muted);
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  td:nth-child(2)::before {
+    content: "Deadline";
+  }
+
+  td:nth-child(3)::before {
+    content: "Event";
+  }
+
+  .venue-title {
+    font-size: 17px;
+  }
+
+  .venue-desc,
+  .muted,
+  .venue-note {
+    font-size: 12px;
+  }
+
+  .deadline-cell {
+    gap: 3px;
+  }
+
+  .favorite-venues {
+    background: color-mix(in srgb, var(--favorite) 6%, var(--bg));
+  }
+
+  .favorite-table-frame {
+    padding: 0 8px 8px;
+    background: transparent;
+  }
+
+  .favorite-venues table {
+    background: transparent;
+  }
+
+  .favorite-venues tbody {
+    gap: 12px;
+  }
+
+  .favorite-venues tbody tr {
+    border-color: color-mix(in srgb, var(--favorite) 36%, var(--rule));
+  }
+
+  .favorite-venues .favorite-group-row {
+    border: 0;
+    background: transparent;
+  }
+
+  .favorite-venues .favorite-group-row td {
+    border: 0;
+    padding: 2px 0 0;
+    background: transparent;
+  }
+}

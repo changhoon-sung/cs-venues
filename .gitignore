@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+public/data/
+
+# Local caches and tooling
+.cache/
+.vite/
+*.tsbuildinfo
+target/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editors and OS files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Local agent/tool state
+AGENTS.md
+.codex/
+.claude/
+.cursor/
+.aider*
+.monkeycode

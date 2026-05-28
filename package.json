@@ -1,0 +1,26 @@
+{
+  "name": "cs-venue-tracker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "data:sync": "node scripts/sync-dataset.mjs",
+    "data:build": "node scripts/build-dataset.mjs",
+    "predev": "npm run data:build",
+    "dev": "vite --host 127.0.0.1",
+    "prebuild": "npm run data:build",
+    "build": "tsc && vite build",
+    "build:latest": "npm run data:sync && npm run build",
+    "preview": "vite preview --host 127.0.0.1"
+  },
+  "dependencies": {
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  }
+}
