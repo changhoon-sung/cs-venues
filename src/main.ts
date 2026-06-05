@@ -7,6 +7,32 @@ import { AREA_NAMES, RANK_ORDER, type AcceptanceRate, type Dataset, type Favorit
 const PREFERENCES_KEY = "cs-venues-table-preferences";
 const FAVORITES_KEY = "cs-venues-favorites";
 const LEGACY_PINS_KEY = "cs-venues-pins";
+const SETTINGS_APP_ID = "cs-venues";
+const SETTINGS_VERSION = 1;
+
+type SettingsExport = {
+  app: typeof SETTINGS_APP_ID;
+  kind: "settings";
+  version: typeof SETTINGS_VERSION;
+  exportedAt: string;
+  preferences: StoredPreferences;
+  favorites: string[];
+};
+
+type SaveFilePickerWindow = Window & {
+  showSaveFilePicker?: (options: {
+    suggestedName?: string;
+    types?: Array<{
+      description: string;
+      accept: Record<string, string[]>;
+    }>;
+  }) => Promise<{
+    createWritable: () => Promise<{
+      write: (data: Blob) => Promise<void>;
+      close: () => Promise<void>;
+    }>;
+  }>;
+};
 
 const state = {
   dataset: null as Dataset | null,
@@ -43,6 +69,13 @@ app.innerHTML = `
       <nav class="top-nav" aria-label="Primary navigation">
         <a class="brand" href="/">CS Venues</a>
         <div class="nav-actions">
+          <div class="data-menu-wrap">
+            <button type="button" id="dataMenuToggle" class="icon-button" aria-label="Settings" title="Settings" aria-expanded="false">${settingsIcon()}</button>
+            <div id="dataMenu" class="data-menu" hidden>
+              <button type="button" data-settings-action="export">Export settings...</button>
+              <button type="button" data-settings-action="import">Import settings...</button>
+            </div>
+          </div>
           <a class="icon-button" href="https://github.com/changhoon-sung/cs-venues" target="_blank" rel="noreferrer" aria-label="GitHub repository" title="GitHub repository">${githubIcon()}</a>
           <button type="button" id="themeToggle" class="theme-toggle" aria-label="Theme: ${state.theme}" title="Theme: ${state.theme}">${themeIcon(state.theme)}</button>
         </div>
@@ -112,11 +145,44 @@ app.innerHTML = `
 
     </main>
   </div>
+  <input id="backupFileInput" class="visually-hidden" type="file" accept="application/json,.json" />
+  <dialog id="backupDialog" class="backup-dialog">
+    <form method="dialog">
+      <div class="dialog-head">
+        <h2 id="backupDialogTitle">Import settings</h2>
+        <button type="button" id="backupDialogClose" class="dialog-close" aria-label="Close">×</button>
+      </div>
+      <textarea id="backupText" spellcheck="false" autocomplete="off"></textarea>
+      <p id="backupHelp" class="dialog-help">Paste a CS Venues settings JSON, then import it.</p>
+      <p id="backupError" class="dialog-error" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" id="backupImportFile">Import file...</button>
+        <button type="button" id="backupCopy">Copy</button>
+        <button type="button" id="backupSaveFile">Save file...</button>
+        <button type="button" id="backupCancel">Cancel</button>
+        <button type="button" id="backupImport" class="primary-action">Import</button>
+      </div>
+    </form>
+  </dialog>
 `;
 
 const controls = {
   query: mustGet<HTMLInputElement>("query"),
   themeToggle: mustGet<HTMLButtonElement>("themeToggle"),
+  dataMenuToggle: mustGet<HTMLButtonElement>("dataMenuToggle"),
+  dataMenu: mustGet<HTMLElement>("dataMenu"),
+  backupFileInput: mustGet<HTMLInputElement>("backupFileInput"),
+  backupDialog: mustGet<HTMLDialogElement>("backupDialog"),
+  backupDialogTitle: mustGet<HTMLElement>("backupDialogTitle"),
+  backupDialogClose: mustGet<HTMLButtonElement>("backupDialogClose"),
+  backupText: mustGet<HTMLTextAreaElement>("backupText"),
+  backupHelp: mustGet<HTMLElement>("backupHelp"),
+  backupError: mustGet<HTMLElement>("backupError"),
+  backupImportFile: mustGet<HTMLButtonElement>("backupImportFile"),
+  backupCopy: mustGet<HTMLButtonElement>("backupCopy"),
+  backupSaveFile: mustGet<HTMLButtonElement>("backupSaveFile"),
+  backupCancel: mustGet<HTMLButtonElement>("backupCancel"),
+  backupImport: mustGet<HTMLButtonElement>("backupImport"),
   areaFilters: mustGet<HTMLElement>("areaFilters"),
   coreFilters: mustGet<HTMLElement>("coreFilters"),
   summary: mustGet<HTMLElement>("summary"),
@@ -165,6 +231,11 @@ function mustGet<T extends HTMLElement>(id: string): T {
     throw new Error(`Missing #${id}`);
   }
   return element as T;
+}
+
+function eventElement(event: Event): Element | null {
+  if (event.target instanceof Element) return event.target;
+  return event.target instanceof Node ? event.target.parentElement : null;
 }
 
 function hydrateFromUrl(): void {
@@ -225,6 +296,15 @@ function encodeListParam(values: string[]): string {
 }
 
 function readStoredPreferences(): Required<StoredPreferences> {
+  try {
+    const raw = window.localStorage.getItem(PREFERENCES_KEY);
+    return normalizeStoredPreferences(raw ? JSON.parse(raw) : null);
+  } catch {
+    return normalizeStoredPreferences(null);
+  }
+}
+
+function normalizeStoredPreferences(value: unknown): Required<StoredPreferences> {
   const defaults: Required<StoredPreferences> = {
     areas: [],
     coreRanks: ["A*", "A"],
@@ -234,24 +314,18 @@ function readStoredPreferences(): Required<StoredPreferences> {
     favoriteCollapsed: false,
     matrixPaused: false,
   };
-
-  try {
-    const raw = window.localStorage.getItem(PREFERENCES_KEY);
-    if (!raw) return defaults;
-    const parsed = JSON.parse(raw) as StoredPreferences;
-    const storedSort = parsed.sort ?? null;
-    return {
-      areas: Array.isArray(parsed.areas) ? parsed.areas.filter(isKnownArea) : defaults.areas,
-      coreRanks: Array.isArray(parsed.coreRanks) ? parsed.coreRanks.filter(isKnownCoreRank) : defaults.coreRanks,
-      sort: isSortKey(storedSort) ? storedSort : defaults.sort,
-      sortDirection: parsed.sortDirection === "desc" ? "desc" : defaults.sortDirection,
-      favoriteLayout: isFavoriteLayout(parsed.favoriteLayout) ? parsed.favoriteLayout : defaults.favoriteLayout,
-      favoriteCollapsed: typeof parsed.favoriteCollapsed === "boolean" ? parsed.favoriteCollapsed : defaults.favoriteCollapsed,
-      matrixPaused: typeof parsed.matrixPaused === "boolean" ? parsed.matrixPaused : defaults.matrixPaused,
-    };
-  } catch {
-    return defaults;
-  }
+  if (!value || typeof value !== "object") return defaults;
+  const parsed = value as StoredPreferences;
+  const storedSort = parsed.sort ?? null;
+  return {
+    areas: Array.isArray(parsed.areas) ? parsed.areas.filter(isKnownArea) : defaults.areas,
+    coreRanks: Array.isArray(parsed.coreRanks) ? parsed.coreRanks.filter(isKnownCoreRank) : defaults.coreRanks,
+    sort: isSortKey(storedSort) ? storedSort : defaults.sort,
+    sortDirection: parsed.sortDirection === "desc" ? "desc" : defaults.sortDirection,
+    favoriteLayout: isFavoriteLayout(parsed.favoriteLayout) ? parsed.favoriteLayout : defaults.favoriteLayout,
+    favoriteCollapsed: typeof parsed.favoriteCollapsed === "boolean" ? parsed.favoriteCollapsed : defaults.favoriteCollapsed,
+    matrixPaused: typeof parsed.matrixPaused === "boolean" ? parsed.matrixPaused : defaults.matrixPaused,
+  };
 }
 
 function writeStoredPreferences(): void {
@@ -337,6 +411,37 @@ function bindEvents(): void {
     render();
   });
 
+  controls.dataMenuToggle.addEventListener("click", (event) => {
+    event.stopPropagation();
+    setDataMenuOpen(controls.dataMenu.hidden);
+  });
+
+  controls.dataMenu.addEventListener("click", (event) => {
+    const dataAction = eventElement(event)?.closest<HTMLButtonElement>("[data-settings-action]");
+    if (!dataAction) return;
+    event.stopPropagation();
+    handleSettingsAction(dataAction.dataset.settingsAction ?? "");
+  });
+
+  controls.backupFileInput.addEventListener("change", () => {
+    void importSelectedBackupFile();
+  });
+
+  controls.backupDialogClose.addEventListener("click", closeBackupDialog);
+  controls.backupCancel.addEventListener("click", closeBackupDialog);
+  controls.backupImportFile.addEventListener("click", () => {
+    controls.backupFileInput.click();
+  });
+  controls.backupCopy.addEventListener("click", () => {
+    void copySettingsText(controls.backupText.value);
+  });
+  controls.backupSaveFile.addEventListener("click", () => {
+    void saveSettingsFile(controls.backupText.value);
+  });
+  controls.backupImport.addEventListener("click", () => {
+    importBackupText(controls.backupText.value);
+  });
+
   controls.themeToggle.addEventListener("click", () => {
     state.theme = state.theme === "dark" ? "light" : "dark";
     state.explicitTheme = true;
@@ -363,12 +468,23 @@ function bindEvents(): void {
   }
 
   document.addEventListener("click", (event) => {
-    const calendarButton = (event.target as Element).closest<HTMLButtonElement>("[data-calendar]");
+    const target = eventElement(event);
+    if (!target) return;
+    const dataAction = target.closest<HTMLButtonElement>("[data-settings-action]");
+    if (dataAction) {
+      handleSettingsAction(dataAction.dataset.settingsAction ?? "");
+      return;
+    }
+    if (!target.closest(".data-menu-wrap")) {
+      setDataMenuOpen(false);
+    }
+
+    const calendarButton = target.closest<HTMLButtonElement>("[data-calendar]");
     if (calendarButton) {
       downloadCalendarEvent(calendarButton.dataset.calendar ?? "");
       return;
     }
-    const sortButton = (event.target as Element).closest<HTMLButtonElement>("[data-sort]");
+    const sortButton = target.closest<HTMLButtonElement>("[data-sort]");
     if (sortButton) {
       const nextSort = parseSortKey(sortButton.dataset.sort ?? null);
       state.sortDirection = state.sort === nextSort && state.sortDirection === "asc" ? "desc" : "asc";
@@ -376,7 +492,7 @@ function bindEvents(): void {
       render();
       return;
     }
-    const rankButton = (event.target as Element).closest<HTMLButtonElement>("[data-rank-filter]");
+    const rankButton = target.closest<HTMLButtonElement>("[data-rank-filter]");
     if (rankButton) {
       const target = rankButton.dataset.rankTarget;
       const rank = rankButton.dataset.rankValue ?? "all";
@@ -385,25 +501,25 @@ function bindEvents(): void {
       render();
       return;
     }
-    const areaButton = (event.target as Element).closest<HTMLButtonElement>("[data-area-filter]");
+    const areaButton = target.closest<HTMLButtonElement>("[data-area-filter]");
     if (areaButton) {
       state.areas = [areaButton.dataset.areaFilter ?? ""].filter(Boolean);
       populateCheckboxFilters();
       render();
       return;
     }
-    const favoriteButton = (event.target as Element).closest<HTMLButtonElement>("[data-favorite]");
+    const favoriteButton = target.closest<HTMLButtonElement>("[data-favorite]");
     if (favoriteButton) {
       toggleFavoriteWithoutScrollJump(favoriteButton);
       return;
     }
-    const favoriteLayoutButton = (event.target as Element).closest<HTMLButtonElement>("[data-favorite-layout]");
+    const favoriteLayoutButton = target.closest<HTMLButtonElement>("[data-favorite-layout]");
     if (favoriteLayoutButton) {
       state.favoriteLayout = favoriteLayoutButton.dataset.favoriteLayout === "area" ? "area" : "unified";
       render();
       return;
     }
-    const favoriteHeader = (event.target as Element).closest<HTMLElement>("[data-favorite-collapse]");
+    const favoriteHeader = target.closest<HTMLElement>("[data-favorite-collapse]");
     if (favoriteHeader) {
       state.favoriteCollapsed = !state.favoriteCollapsed;
       render();
@@ -411,13 +527,160 @@ function bindEvents(): void {
   });
 
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") {
+      setDataMenuOpen(false);
+      return;
+    }
     if (event.key !== "Enter" && event.key !== " ") return;
-    const favoriteHeader = (event.target as Element).closest<HTMLElement>("[data-favorite-collapse]");
+    const favoriteHeader = eventElement(event)?.closest<HTMLElement>("[data-favorite-collapse]");
     if (!favoriteHeader) return;
     event.preventDefault();
     state.favoriteCollapsed = !state.favoriteCollapsed;
     render();
   });
+}
+
+function setDataMenuOpen(open: boolean): void {
+  controls.dataMenu.hidden = !open;
+  controls.dataMenuToggle.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+function handleSettingsAction(action: string): void {
+  setDataMenuOpen(false);
+  switch (action) {
+    case "export":
+      openBackupDialog("export", serializeStorageSettings());
+      return;
+    case "import":
+      openBackupDialog("import");
+      return;
+    default:
+      return;
+  }
+}
+
+async function copySettingsText(text: string): Promise<void> {
+  try {
+    await navigator.clipboard.writeText(text);
+    showBackupSuccess("Copied settings JSON to clipboard.");
+  } catch {
+    showBackupError("Clipboard copy failed. Select the text and copy it manually.");
+  }
+}
+
+async function saveSettingsFile(text: string): Promise<void> {
+  const blob = new Blob([text], { type: "application/json;charset=utf-8" });
+  const filename = settingsFilename();
+  const pickerWindow = window as SaveFilePickerWindow;
+  if (pickerWindow.showSaveFilePicker) {
+    try {
+      const handle = await pickerWindow.showSaveFilePicker({
+        suggestedName: filename,
+        types: [{
+          description: "JSON files",
+          accept: { "application/json": [".json"] },
+        }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      controls.backupHelp.textContent = "Saved settings file.";
+      return;
+    } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") return;
+      showBackupError("Could not open the save dialog. Downloading instead.");
+    }
+  }
+  downloadSettingsFile(blob, filename);
+}
+
+function downloadSettingsFile(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
+
+function settingsFilename(): string {
+  const date = new Date().toISOString().slice(0, 10);
+  return `cs-venues-settings-${date}.json`;
+}
+
+async function importSelectedBackupFile(): Promise<void> {
+  const file = controls.backupFileInput.files?.[0];
+  controls.backupFileInput.value = "";
+  if (!file) return;
+  const text = await file.text();
+  try {
+    applyStorageSettings(parseStorageSettings(text));
+    closeBackupDialog();
+  } catch (error) {
+    openBackupDialog("import", text);
+    showBackupError(error instanceof Error ? error.message : "Failed to read settings file.");
+  }
+}
+
+function openBackupDialog(mode: "export" | "import", text = ""): void {
+  controls.backupDialogTitle.textContent = mode === "export" ? "Export settings" : "Import settings";
+  controls.backupText.value = text;
+  controls.backupText.readOnly = mode === "export";
+  setBackupHelp(mode === "export"
+    ? "Copy the settings JSON or save it as a file."
+    : "Paste a CS Venues settings JSON, then import it.");
+  controls.backupImportFile.hidden = mode !== "import";
+  controls.backupCopy.hidden = mode !== "export";
+  controls.backupSaveFile.hidden = mode !== "export";
+  controls.backupCancel.textContent = mode === "export" ? "Close" : "Cancel";
+  controls.backupImport.hidden = mode !== "import";
+  clearBackupError();
+  if (!controls.backupDialog.open) controls.backupDialog.showModal();
+  controls.backupText.focus();
+  if (mode === "export") controls.backupText.select();
+}
+
+function closeBackupDialog(): void {
+  if (!controls.backupDialog.open) return;
+  controls.backupDialog.close();
+}
+
+function importBackupText(text: string): void {
+  try {
+    applyStorageSettings(parseStorageSettings(text));
+    closeBackupDialog();
+  } catch (error) {
+    showBackupError(error instanceof Error ? error.message : "Invalid settings file.");
+  }
+}
+
+function showBackupError(message: string): void {
+  controls.backupError.textContent = message;
+  controls.backupError.hidden = false;
+}
+
+function showBackupSuccess(message: string): void {
+  controls.backupHelp.classList.add("success");
+  controls.backupHelp.innerHTML = `
+    <span class="status-check" aria-hidden="true">
+      <svg viewBox="0 0 16 16">
+        <path d="M3.2 8.4 6.4 11.6 12.8 4.8"></path>
+      </svg>
+    </span>
+    <span>${escapeHtml(message)}</span>
+  `;
+}
+
+function setBackupHelp(message: string): void {
+  controls.backupHelp.classList.remove("success");
+  controls.backupHelp.textContent = message;
+}
+
+function clearBackupError(): void {
+  controls.backupError.textContent = "";
+  controls.backupError.hidden = true;
 }
 
 function toggleFavorite(title: string): void {
@@ -461,6 +724,81 @@ function writeStoredFavorites(): void {
   } catch {
     // Favorites are progressive enhancement; the table remains usable without storage.
   }
+}
+
+function buildStorageSettings(): SettingsExport {
+  return {
+    app: SETTINGS_APP_ID,
+    kind: "settings",
+    version: SETTINGS_VERSION,
+    exportedAt: new Date().toISOString(),
+    preferences: {
+      areas: state.areas,
+      coreRanks: state.coreRanks,
+      sort: state.sort,
+      sortDirection: state.sortDirection,
+      favoriteLayout: state.favoriteLayout,
+      favoriteCollapsed: state.favoriteCollapsed,
+      matrixPaused: state.matrixPaused,
+    },
+    favorites: [...state.favoriteVenues].sort(),
+  };
+}
+
+function serializeStorageSettings(): string {
+  return `${JSON.stringify(buildStorageSettings(), null, 2)}\n`;
+}
+
+function parseStorageSettings(text: string): SettingsExport {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    throw new Error("Settings text is not valid JSON.");
+  }
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error("Settings must be a JSON object.");
+  }
+  const settings = parsed as Partial<SettingsExport>;
+  if (settings.app !== SETTINGS_APP_ID || settings.version !== SETTINGS_VERSION) {
+    throw new Error("Settings are not a supported CS Venues v1 export.");
+  }
+  if (settings.kind && settings.kind !== "settings") {
+    throw new Error("Settings export has an unsupported kind.");
+  }
+  return {
+    app: SETTINGS_APP_ID,
+    kind: "settings",
+    version: SETTINGS_VERSION,
+    exportedAt: typeof settings.exportedAt === "string" ? settings.exportedAt : new Date().toISOString(),
+    preferences: normalizeStoredPreferences(settings.preferences),
+    favorites: Array.isArray(settings.favorites)
+      ? settings.favorites.filter((item): item is string => typeof item === "string")
+      : [],
+  };
+}
+
+function applyStorageSettings(settings: SettingsExport): void {
+  const preferences = normalizeStoredPreferences(settings.preferences);
+  state.areas = preferences.areas;
+  state.coreRanks = preferences.coreRanks;
+  state.sort = preferences.sort;
+  state.sortDirection = preferences.sortDirection;
+  state.favoriteLayout = preferences.favoriteLayout;
+  state.favoriteCollapsed = preferences.favoriteCollapsed;
+  state.matrixPaused = preferences.matrixPaused;
+  state.favoriteVenues = new Set(knownFavoriteTitles(settings.favorites));
+  ornament?.setPaused?.(state.matrixPaused);
+  writeStoredFavorites();
+  populateCheckboxFilters();
+  syncControls();
+  render();
+}
+
+function knownFavoriteTitles(favorites: string[]): string[] {
+  if (!state.dataset) return favorites;
+  const known = new Set(state.dataset.venues.map((venue) => venue.title));
+  return favorites.filter((title) => known.has(title));
 }
 
 function downloadCalendarEvent(title: string): void {
@@ -796,6 +1134,22 @@ function calendarIcon(): string {
   return `
     <svg viewBox="0 0 24 24" aria-hidden="true">
       <path d="M8 2v4M16 2v4M3.5 9h17M6 4h12a2.5 2.5 0 0 1 2.5 2.5v12A2.5 2.5 0 0 1 18 21H6a2.5 2.5 0 0 1-2.5-2.5v-12A2.5 2.5 0 0 1 6 4Z"></path>
+    </svg>
+  `;
+}
+
+function settingsIcon(): string {
+  return `
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4 7h10"></path>
+      <path d="M18 7h2"></path>
+      <path d="M4 12h3"></path>
+      <path d="M11 12h9"></path>
+      <path d="M4 17h12"></path>
+      <path d="M20 17h0"></path>
+      <circle cx="16" cy="7" r="2"></circle>
+      <circle cx="9" cy="12" r="2"></circle>
+      <circle cx="18" cy="17" r="2"></circle>
     </svg>
   `;
 }

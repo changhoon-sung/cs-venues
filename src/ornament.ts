@@ -108,6 +108,7 @@ function buildPool(share: number): Token[] {
 export type OrnamentHandle = {
   refreshColors: () => void;
   relayout: () => void;
+  setPaused: (paused: boolean) => void;
   destroy: () => void;
 };
 
@@ -120,7 +121,7 @@ export function mountOrnament(
   } = {},
 ): OrnamentHandle {
   const ctx = canvas.getContext("2d");
-  if (!ctx) return { refreshColors() {}, relayout() {}, destroy() {} };
+  if (!ctx) return { refreshColors() {}, relayout() {}, setPaused() {}, destroy() {} };
   const context = ctx;
 
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -376,6 +377,7 @@ export function mountOrnament(
       if (reduced) start();
     },
     relayout: start,
+    setPaused,
     destroy() {
       stopTimer();
       clearTimeout(resizeT);
