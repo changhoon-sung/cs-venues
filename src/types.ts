@@ -71,6 +71,7 @@ export type StoredPreferences = {
   sortDirection?: SortDirection;
   favoriteLayout?: FavoriteLayout;
   favoriteCollapsed?: boolean;
+  matrixPaused?: boolean;
 };
 
 export const AREA_NAMES: Record<string, string> = {

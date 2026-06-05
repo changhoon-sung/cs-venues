@@ -21,6 +21,7 @@ const state = {
   favoriteVenues: new Set<string>(),
   favoriteLayout: "unified" as FavoriteLayout,
   favoriteCollapsed: false,
+  matrixPaused: false,
 };
 
 const app = document.querySelector<HTMLDivElement>("#app");
@@ -130,6 +131,11 @@ if (headerOrnamentCanvas instanceof HTMLCanvasElement) {
   ornament = mountOrnament(headerOrnamentCanvas, {
     pauseButton:
       headerOrnamentPause instanceof HTMLButtonElement ? headerOrnamentPause : undefined,
+    paused: state.matrixPaused,
+    onPausedChange(paused) {
+      state.matrixPaused = paused;
+      writeStoredPreferences();
+    },
   });
 }
 
@@ -172,6 +178,7 @@ function hydrateFromUrl(): void {
   state.sortDirection = params.has("dir") && isSortKey(sortParam) ? parseSortDirection(params.get("dir")) : stored.sortDirection;
   state.favoriteLayout = stored.favoriteLayout;
   state.favoriteCollapsed = stored.favoriteCollapsed;
+  state.matrixPaused = stored.matrixPaused;
   const themeParam = parseThemeMode(params.get("theme"));
   state.explicitTheme = Boolean(themeParam);
   state.theme = themeParam ?? preferredTheme();
@@ -225,6 +232,7 @@ function readStoredPreferences(): Required<StoredPreferences> {
     sortDirection: "asc",
     favoriteLayout: "unified",
     favoriteCollapsed: false,
+    matrixPaused: false,
   };
 
   try {
@@ -239,6 +247,7 @@ function readStoredPreferences(): Required<StoredPreferences> {
       sortDirection: parsed.sortDirection === "desc" ? "desc" : defaults.sortDirection,
       favoriteLayout: isFavoriteLayout(parsed.favoriteLayout) ? parsed.favoriteLayout : defaults.favoriteLayout,
       favoriteCollapsed: typeof parsed.favoriteCollapsed === "boolean" ? parsed.favoriteCollapsed : defaults.favoriteCollapsed,
+      matrixPaused: typeof parsed.matrixPaused === "boolean" ? parsed.matrixPaused : defaults.matrixPaused,
     };
   } catch {
     return defaults;
@@ -254,6 +263,7 @@ function writeStoredPreferences(): void {
       sortDirection: state.sortDirection,
       favoriteLayout: state.favoriteLayout,
       favoriteCollapsed: state.favoriteCollapsed,
+      matrixPaused: state.matrixPaused,
     };
     window.localStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences));
   } catch {

@@ -113,7 +113,11 @@ export type OrnamentHandle = {
 
 export function mountOrnament(
   canvas: HTMLCanvasElement,
-  options: { pauseButton?: HTMLButtonElement } = {},
+  options: {
+    pauseButton?: HTMLButtonElement;
+    paused?: boolean;
+    onPausedChange?: (paused: boolean) => void;
+  } = {},
 ): OrnamentHandle {
   const ctx = canvas.getContext("2d");
   if (!ctx) return { refreshColors() {}, relayout() {}, destroy() {} };
@@ -121,7 +125,7 @@ export function mountOrnament(
 
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const pauseButton = options.pauseButton ?? null;
-  let paused = false;
+  let paused = Boolean(options.paused);
   let palette = readPalette();
 
   const RAIN_POOL = buildPool(RAIN_SHARE);
@@ -317,21 +321,25 @@ export function mountOrnament(
     scheduleFrame();
   }
 
-  function setPaused(value: boolean) {
-    if (value === paused) return;
-    if (value) {
-      paused = true;
-    } else {
-      paused = false;
-    }
+  function syncPauseButton() {
     if (pauseButton) {
-      pauseButton.textContent = value ? "▶" : "⏸";
-      pauseButton.classList.toggle("is-paused", value);
+      pauseButton.textContent = paused ? "▶" : "⏸";
+      pauseButton.classList.toggle("is-paused", paused);
       pauseButton.setAttribute(
         "aria-label",
-        value ? "Resume background animation" : "Pause background animation",
+        paused ? "Resume background animation" : "Pause background animation",
       );
     }
+  }
+
+  function setPaused(value: boolean) {
+    if (value === paused) {
+      syncPauseButton();
+      return;
+    }
+    paused = value;
+    syncPauseButton();
+    options.onPausedChange?.(paused);
     applyRunState();
   }
 
@@ -358,6 +366,7 @@ export function mountOrnament(
   window.addEventListener("resize", onResize);
   document.addEventListener("visibilitychange", onVisibilityChange);
   io.observe(canvas);
+  syncPauseButton();
   start();
 
   return {
