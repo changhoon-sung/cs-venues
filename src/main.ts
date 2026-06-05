@@ -2,21 +2,9 @@ import "./styles.css";
 import { calendarFile } from "./calendar";
 import { formatLocal, formatRemaining, latestUpcomingTime, nextDeadline, projectedCycleTime } from "./deadlines";
 import { mountOrnament, type OrnamentHandle } from "./ornament";
+import { parseStorageSettings, serializeStorageSettings, settingsFilename, type SettingsExport } from "./settings";
+import { readStoredFavorites, readStoredPreferences, writeStoredFavorites, writeStoredPreferences } from "./storage";
 import { AREA_NAMES, RANK_ORDER, type AcceptanceRate, type Dataset, type FavoriteLayout, type SortDirection, type SortKey, type StoredPreferences, type ThemeMode, type Venue, type ViewRow } from "./types";
-
-const PREFERENCES_KEY = "cs-venues-table-preferences";
-const FAVORITES_KEY = "cs-venues-favorites";
-const SETTINGS_APP_ID = "cs-venues";
-const SETTINGS_VERSION = 1;
-
-type SettingsExport = {
-  app: typeof SETTINGS_APP_ID;
-  kind: "settings";
-  version: typeof SETTINGS_VERSION;
-  exportedAt: string;
-  preferences: StoredPreferences;
-  favorites: string[];
-};
 
 type SaveFilePickerWindow = Window & {
   showSaveFilePicker?: (options: {
@@ -199,7 +187,7 @@ if (headerOrnamentCanvas instanceof HTMLCanvasElement) {
     paused: state.matrixPaused,
     onPausedChange(paused) {
       state.matrixPaused = paused;
-      writeStoredPreferences();
+      writeStoredPreferences(currentStoredPreferences());
     },
   });
 }
@@ -294,68 +282,6 @@ function encodeListParam(values: string[]): string {
   return values.length ? values.join(",") : "all";
 }
 
-function readStoredPreferences(): Required<StoredPreferences> {
-  try {
-    const raw = window.localStorage.getItem(PREFERENCES_KEY);
-    return normalizeStoredPreferences(raw ? JSON.parse(raw) : null);
-  } catch {
-    return normalizeStoredPreferences(null);
-  }
-}
-
-function normalizeStoredPreferences(value: unknown): Required<StoredPreferences> {
-  const defaults: Required<StoredPreferences> = {
-    areas: [],
-    coreRanks: ["A*", "A"],
-    sort: "remaining",
-    sortDirection: "asc",
-    favoriteLayout: "unified",
-    favoriteCollapsed: false,
-    matrixPaused: false,
-  };
-  if (!value || typeof value !== "object") return defaults;
-  const parsed = value as StoredPreferences;
-  const storedSort = parsed.sort ?? null;
-  return {
-    areas: Array.isArray(parsed.areas) ? parsed.areas.filter(isKnownArea) : defaults.areas,
-    coreRanks: Array.isArray(parsed.coreRanks) ? parsed.coreRanks.filter(isKnownCoreRank) : defaults.coreRanks,
-    sort: isSortKey(storedSort) ? storedSort : defaults.sort,
-    sortDirection: parsed.sortDirection === "desc" ? "desc" : defaults.sortDirection,
-    favoriteLayout: isFavoriteLayout(parsed.favoriteLayout) ? parsed.favoriteLayout : defaults.favoriteLayout,
-    favoriteCollapsed: typeof parsed.favoriteCollapsed === "boolean" ? parsed.favoriteCollapsed : defaults.favoriteCollapsed,
-    matrixPaused: typeof parsed.matrixPaused === "boolean" ? parsed.matrixPaused : defaults.matrixPaused,
-  };
-}
-
-function writeStoredPreferences(): void {
-  try {
-    const preferences: StoredPreferences = {
-      areas: state.areas,
-      coreRanks: state.coreRanks,
-      sort: state.sort,
-      sortDirection: state.sortDirection,
-      favoriteLayout: state.favoriteLayout,
-      favoriteCollapsed: state.favoriteCollapsed,
-      matrixPaused: state.matrixPaused,
-    };
-    window.localStorage.setItem(PREFERENCES_KEY, JSON.stringify(preferences));
-  } catch {
-    // Ignore storage failures; URL state still keeps the app shareable.
-  }
-}
-
-function isKnownArea(value: unknown): value is string {
-  return typeof value === "string" && (value in AREA_NAMES);
-}
-
-function isKnownCoreRank(value: unknown): value is string {
-  return typeof value === "string" && coreRankValues().includes(value);
-}
-
-function isFavoriteLayout(value: unknown): value is FavoriteLayout {
-  return value === "unified" || value === "area";
-}
-
 function writeUrl(): void {
   const params = new URLSearchParams();
   params.set("q", state.query);
@@ -367,6 +293,18 @@ function writeUrl(): void {
     params.set("theme", state.theme);
   }
   window.history.replaceState(null, "", `?${params.toString()}`);
+}
+
+function currentStoredPreferences(): StoredPreferences {
+  return {
+    areas: state.areas,
+    coreRanks: state.coreRanks,
+    sort: state.sort,
+    sortDirection: state.sortDirection,
+    favoriteLayout: state.favoriteLayout,
+    favoriteCollapsed: state.favoriteCollapsed,
+    matrixPaused: state.matrixPaused,
+  };
 }
 
 function populateCheckboxFilters(): void {
@@ -548,7 +486,7 @@ function handleSettingsAction(action: string): void {
   setDataMenuOpen(false);
   switch (action) {
     case "export":
-      openSettingsDialog("export", serializeStorageSettings());
+      openSettingsDialog("export", serializeStorageSettings(currentStoredPreferences(), state.favoriteVenues));
       return;
     case "import":
       openSettingsDialog("import");
@@ -602,11 +540,6 @@ function downloadSettingsFile(blob: Blob, filename: string): void {
   link.click();
   link.remove();
   URL.revokeObjectURL(url);
-}
-
-function settingsFilename(): string {
-  const date = new Date().toISOString().slice(0, 10);
-  return `cs-venues-settings-${date}.json`;
 }
 
 async function importSelectedSettingsFile(): Promise<void> {
@@ -689,7 +622,7 @@ function toggleFavorite(title: string): void {
   } else {
     state.favoriteVenues.add(title);
   }
-  writeStoredFavorites();
+  writeStoredFavorites(state.favoriteVenues);
 }
 
 function toggleFavoriteWithoutScrollJump(button: HTMLButtonElement): void {
@@ -707,78 +640,8 @@ function toggleFavoriteWithoutScrollJump(button: HTMLButtonElement): void {
   if (delta) window.scrollBy(0, delta);
 }
 
-function readStoredFavorites(): Set<string> {
-  try {
-    const raw = window.localStorage.getItem(FAVORITES_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return new Set(Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : []);
-  } catch {
-    return new Set();
-  }
-}
-
-function writeStoredFavorites(): void {
-  try {
-    window.localStorage.setItem(FAVORITES_KEY, JSON.stringify([...state.favoriteVenues].sort()));
-  } catch {
-    // Favorites are progressive enhancement; the table remains usable without storage.
-  }
-}
-
-function buildStorageSettings(): SettingsExport {
-  return {
-    app: SETTINGS_APP_ID,
-    kind: "settings",
-    version: SETTINGS_VERSION,
-    exportedAt: new Date().toISOString(),
-    preferences: {
-      areas: state.areas,
-      coreRanks: state.coreRanks,
-      sort: state.sort,
-      sortDirection: state.sortDirection,
-      favoriteLayout: state.favoriteLayout,
-      favoriteCollapsed: state.favoriteCollapsed,
-      matrixPaused: state.matrixPaused,
-    },
-    favorites: [...state.favoriteVenues].sort(),
-  };
-}
-
-function serializeStorageSettings(): string {
-  return `${JSON.stringify(buildStorageSettings(), null, 2)}\n`;
-}
-
-function parseStorageSettings(text: string): SettingsExport {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    throw new Error("Settings text is not valid JSON.");
-  }
-  if (!parsed || typeof parsed !== "object") {
-    throw new Error("Settings must be a JSON object.");
-  }
-  const settings = parsed as Partial<SettingsExport>;
-  if (settings.app !== SETTINGS_APP_ID || settings.version !== SETTINGS_VERSION) {
-    throw new Error("Settings are not a supported CS Venues v1 export.");
-  }
-  if (settings.kind && settings.kind !== "settings") {
-    throw new Error("Settings export has an unsupported kind.");
-  }
-  return {
-    app: SETTINGS_APP_ID,
-    kind: "settings",
-    version: SETTINGS_VERSION,
-    exportedAt: typeof settings.exportedAt === "string" ? settings.exportedAt : new Date().toISOString(),
-    preferences: normalizeStoredPreferences(settings.preferences),
-    favorites: Array.isArray(settings.favorites)
-      ? settings.favorites.filter((item): item is string => typeof item === "string")
-      : [],
-  };
-}
-
 function applyStorageSettings(settings: SettingsExport): void {
-  const preferences = normalizeStoredPreferences(settings.preferences);
+  const preferences = settings.preferences;
   state.areas = preferences.areas;
   state.coreRanks = preferences.coreRanks;
   state.sort = preferences.sort;
@@ -788,7 +651,7 @@ function applyStorageSettings(settings: SettingsExport): void {
   state.matrixPaused = preferences.matrixPaused;
   state.favoriteVenues = new Set(knownFavoriteTitles(settings.favorites));
   ornament?.setPaused?.(state.matrixPaused);
-  writeStoredFavorites();
+  writeStoredFavorites(state.favoriteVenues);
   populateCheckboxFilters();
   syncControls();
   render();
@@ -866,7 +729,7 @@ function render(): void {
   renderRowsOnly();
   renderSortIndicators();
   writeUrl();
-  writeStoredPreferences();
+  writeStoredPreferences(currentStoredPreferences());
   requestAnimationFrame(() => ornament?.relayout());
 }
 
