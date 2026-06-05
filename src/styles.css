@@ -241,7 +241,7 @@ a.icon-button svg {
   white-space: nowrap;
 }
 
-.backup-dialog {
+.settings-dialog {
   width: min(720px, calc(100% - 28px));
   max-height: calc(100dvh - 28px);
   border: 1px solid var(--rule);
@@ -251,11 +251,11 @@ a.icon-button svg {
   overflow: hidden;
 }
 
-.backup-dialog::backdrop {
+.settings-dialog::backdrop {
   background: rgb(0 0 0 / 28%);
 }
 
-.backup-dialog form {
+.settings-dialog form {
   display: grid;
   gap: 10px;
   margin: 0;
@@ -296,7 +296,7 @@ a.icon-button svg {
   outline: none;
 }
 
-.backup-dialog textarea {
+.settings-dialog textarea {
   width: 100%;
   min-height: 260px;
   max-height: min(420px, calc(100dvh - 230px));
@@ -964,12 +964,12 @@ tbody tr:hover {
     width: min(184px, calc(100vw - 24px));
   }
 
-  .backup-dialog {
+  .settings-dialog {
     width: calc(100% - 16px);
     max-height: calc(100dvh - 16px);
   }
 
-  .backup-dialog form {
+  .settings-dialog form {
     gap: 8px;
     max-height: calc(100dvh - 16px);
     padding: 12px;
@@ -979,7 +979,7 @@ tbody tr:hover {
     font-size: 13px;
   }
 
-  .backup-dialog textarea {
+  .settings-dialog textarea {
     min-height: 180px;
     max-height: calc(100dvh - 250px);
     font-size: 11px;

@@ -6,7 +6,6 @@ import { AREA_NAMES, RANK_ORDER, type AcceptanceRate, type Dataset, type Favorit
 
 const PREFERENCES_KEY = "cs-venues-table-preferences";
 const FAVORITES_KEY = "cs-venues-favorites";
-const LEGACY_PINS_KEY = "cs-venues-pins";
 const SETTINGS_APP_ID = "cs-venues";
 const SETTINGS_VERSION = 1;
 
@@ -145,22 +144,22 @@ app.innerHTML = `
 
     </main>
   </div>
-  <input id="backupFileInput" class="visually-hidden" type="file" accept="application/json,.json" />
-  <dialog id="backupDialog" class="backup-dialog">
+  <input id="settingsFileInput" class="visually-hidden" type="file" accept="application/json,.json" />
+  <dialog id="settingsDialog" class="settings-dialog">
     <form method="dialog">
       <div class="dialog-head">
-        <h2 id="backupDialogTitle">Import settings</h2>
-        <button type="button" id="backupDialogClose" class="dialog-close" aria-label="Close">×</button>
+        <h2 id="settingsDialogTitle">Import settings</h2>
+        <button type="button" id="settingsDialogClose" class="dialog-close" aria-label="Close">×</button>
       </div>
-      <textarea id="backupText" spellcheck="false" autocomplete="off"></textarea>
-      <p id="backupHelp" class="dialog-help">Paste a CS Venues settings JSON, then import it.</p>
-      <p id="backupError" class="dialog-error" hidden></p>
+      <textarea id="settingsText" spellcheck="false" autocomplete="off"></textarea>
+      <p id="settingsHelp" class="dialog-help">Paste a CS Venues settings JSON, then import it.</p>
+      <p id="settingsError" class="dialog-error" hidden></p>
       <div class="dialog-actions">
-        <button type="button" id="backupImportFile">Import file...</button>
-        <button type="button" id="backupCopy">Copy</button>
-        <button type="button" id="backupSaveFile">Save file...</button>
-        <button type="button" id="backupCancel">Cancel</button>
-        <button type="button" id="backupImport" class="primary-action">Import</button>
+        <button type="button" id="settingsImportFile">Import file...</button>
+        <button type="button" id="settingsCopy">Copy</button>
+        <button type="button" id="settingsSaveFile">Save file...</button>
+        <button type="button" id="settingsCancel">Cancel</button>
+        <button type="button" id="settingsImport" class="primary-action">Import</button>
       </div>
     </form>
   </dialog>
@@ -171,18 +170,18 @@ const controls = {
   themeToggle: mustGet<HTMLButtonElement>("themeToggle"),
   dataMenuToggle: mustGet<HTMLButtonElement>("dataMenuToggle"),
   dataMenu: mustGet<HTMLElement>("dataMenu"),
-  backupFileInput: mustGet<HTMLInputElement>("backupFileInput"),
-  backupDialog: mustGet<HTMLDialogElement>("backupDialog"),
-  backupDialogTitle: mustGet<HTMLElement>("backupDialogTitle"),
-  backupDialogClose: mustGet<HTMLButtonElement>("backupDialogClose"),
-  backupText: mustGet<HTMLTextAreaElement>("backupText"),
-  backupHelp: mustGet<HTMLElement>("backupHelp"),
-  backupError: mustGet<HTMLElement>("backupError"),
-  backupImportFile: mustGet<HTMLButtonElement>("backupImportFile"),
-  backupCopy: mustGet<HTMLButtonElement>("backupCopy"),
-  backupSaveFile: mustGet<HTMLButtonElement>("backupSaveFile"),
-  backupCancel: mustGet<HTMLButtonElement>("backupCancel"),
-  backupImport: mustGet<HTMLButtonElement>("backupImport"),
+  settingsFileInput: mustGet<HTMLInputElement>("settingsFileInput"),
+  settingsDialog: mustGet<HTMLDialogElement>("settingsDialog"),
+  settingsDialogTitle: mustGet<HTMLElement>("settingsDialogTitle"),
+  settingsDialogClose: mustGet<HTMLButtonElement>("settingsDialogClose"),
+  settingsText: mustGet<HTMLTextAreaElement>("settingsText"),
+  settingsHelp: mustGet<HTMLElement>("settingsHelp"),
+  settingsError: mustGet<HTMLElement>("settingsError"),
+  settingsImportFile: mustGet<HTMLButtonElement>("settingsImportFile"),
+  settingsCopy: mustGet<HTMLButtonElement>("settingsCopy"),
+  settingsSaveFile: mustGet<HTMLButtonElement>("settingsSaveFile"),
+  settingsCancel: mustGet<HTMLButtonElement>("settingsCancel"),
+  settingsImport: mustGet<HTMLButtonElement>("settingsImport"),
   areaFilters: mustGet<HTMLElement>("areaFilters"),
   coreFilters: mustGet<HTMLElement>("coreFilters"),
   summary: mustGet<HTMLElement>("summary"),
@@ -423,23 +422,23 @@ function bindEvents(): void {
     handleSettingsAction(dataAction.dataset.settingsAction ?? "");
   });
 
-  controls.backupFileInput.addEventListener("change", () => {
-    void importSelectedBackupFile();
+  controls.settingsFileInput.addEventListener("change", () => {
+    void importSelectedSettingsFile();
   });
 
-  controls.backupDialogClose.addEventListener("click", closeBackupDialog);
-  controls.backupCancel.addEventListener("click", closeBackupDialog);
-  controls.backupImportFile.addEventListener("click", () => {
-    controls.backupFileInput.click();
+  controls.settingsDialogClose.addEventListener("click", closeSettingsDialog);
+  controls.settingsCancel.addEventListener("click", closeSettingsDialog);
+  controls.settingsImportFile.addEventListener("click", () => {
+    controls.settingsFileInput.click();
   });
-  controls.backupCopy.addEventListener("click", () => {
-    void copySettingsText(controls.backupText.value);
+  controls.settingsCopy.addEventListener("click", () => {
+    void copySettingsText(controls.settingsText.value);
   });
-  controls.backupSaveFile.addEventListener("click", () => {
-    void saveSettingsFile(controls.backupText.value);
+  controls.settingsSaveFile.addEventListener("click", () => {
+    void saveSettingsFile(controls.settingsText.value);
   });
-  controls.backupImport.addEventListener("click", () => {
-    importBackupText(controls.backupText.value);
+  controls.settingsImport.addEventListener("click", () => {
+    importSettingsText(controls.settingsText.value);
   });
 
   controls.themeToggle.addEventListener("click", () => {
@@ -549,10 +548,10 @@ function handleSettingsAction(action: string): void {
   setDataMenuOpen(false);
   switch (action) {
     case "export":
-      openBackupDialog("export", serializeStorageSettings());
+      openSettingsDialog("export", serializeStorageSettings());
       return;
     case "import":
-      openBackupDialog("import");
+      openSettingsDialog("import");
       return;
     default:
       return;
@@ -562,9 +561,9 @@ function handleSettingsAction(action: string): void {
 async function copySettingsText(text: string): Promise<void> {
   try {
     await navigator.clipboard.writeText(text);
-    showBackupSuccess("Copied settings JSON to clipboard.");
+    showSettingsSuccess("Copied settings JSON to clipboard.");
   } catch {
-    showBackupError("Clipboard copy failed. Select the text and copy it manually.");
+    showSettingsError("Clipboard copy failed. Select the text and copy it manually.");
   }
 }
 
@@ -584,11 +583,11 @@ async function saveSettingsFile(text: string): Promise<void> {
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
-      controls.backupHelp.textContent = "Saved settings file.";
+      controls.settingsHelp.textContent = "Saved settings file.";
       return;
     } catch (error) {
       if (error instanceof DOMException && error.name === "AbortError") return;
-      showBackupError("Could not open the save dialog. Downloading instead.");
+      showSettingsError("Could not open the save dialog. Downloading instead.");
     }
   }
   downloadSettingsFile(blob, filename);
@@ -610,60 +609,60 @@ function settingsFilename(): string {
   return `cs-venues-settings-${date}.json`;
 }
 
-async function importSelectedBackupFile(): Promise<void> {
-  const file = controls.backupFileInput.files?.[0];
-  controls.backupFileInput.value = "";
+async function importSelectedSettingsFile(): Promise<void> {
+  const file = controls.settingsFileInput.files?.[0];
+  controls.settingsFileInput.value = "";
   if (!file) return;
   const text = await file.text();
   try {
     applyStorageSettings(parseStorageSettings(text));
-    closeBackupDialog();
+    closeSettingsDialog();
   } catch (error) {
-    openBackupDialog("import", text);
-    showBackupError(error instanceof Error ? error.message : "Failed to read settings file.");
+    openSettingsDialog("import", text);
+    showSettingsError(error instanceof Error ? error.message : "Failed to read settings file.");
   }
 }
 
-function openBackupDialog(mode: "export" | "import", text = ""): void {
-  controls.backupDialogTitle.textContent = mode === "export" ? "Export settings" : "Import settings";
-  controls.backupText.value = text;
-  controls.backupText.readOnly = mode === "export";
-  setBackupHelp(mode === "export"
+function openSettingsDialog(mode: "export" | "import", text = ""): void {
+  controls.settingsDialogTitle.textContent = mode === "export" ? "Export settings" : "Import settings";
+  controls.settingsText.value = text;
+  controls.settingsText.readOnly = mode === "export";
+  setSettingsHelp(mode === "export"
     ? "Copy the settings JSON or save it as a file."
     : "Paste a CS Venues settings JSON, then import it.");
-  controls.backupImportFile.hidden = mode !== "import";
-  controls.backupCopy.hidden = mode !== "export";
-  controls.backupSaveFile.hidden = mode !== "export";
-  controls.backupCancel.textContent = mode === "export" ? "Close" : "Cancel";
-  controls.backupImport.hidden = mode !== "import";
-  clearBackupError();
-  if (!controls.backupDialog.open) controls.backupDialog.showModal();
-  controls.backupText.focus();
-  if (mode === "export") controls.backupText.select();
+  controls.settingsImportFile.hidden = mode !== "import";
+  controls.settingsCopy.hidden = mode !== "export";
+  controls.settingsSaveFile.hidden = mode !== "export";
+  controls.settingsCancel.textContent = mode === "export" ? "Close" : "Cancel";
+  controls.settingsImport.hidden = mode !== "import";
+  clearSettingsError();
+  if (!controls.settingsDialog.open) controls.settingsDialog.showModal();
+  controls.settingsText.focus();
+  if (mode === "export") controls.settingsText.select();
 }
 
-function closeBackupDialog(): void {
-  if (!controls.backupDialog.open) return;
-  controls.backupDialog.close();
+function closeSettingsDialog(): void {
+  if (!controls.settingsDialog.open) return;
+  controls.settingsDialog.close();
 }
 
-function importBackupText(text: string): void {
+function importSettingsText(text: string): void {
   try {
     applyStorageSettings(parseStorageSettings(text));
-    closeBackupDialog();
+    closeSettingsDialog();
   } catch (error) {
-    showBackupError(error instanceof Error ? error.message : "Invalid settings file.");
+    showSettingsError(error instanceof Error ? error.message : "Invalid settings file.");
   }
 }
 
-function showBackupError(message: string): void {
-  controls.backupError.textContent = message;
-  controls.backupError.hidden = false;
+function showSettingsError(message: string): void {
+  controls.settingsError.textContent = message;
+  controls.settingsError.hidden = false;
 }
 
-function showBackupSuccess(message: string): void {
-  controls.backupHelp.classList.add("success");
-  controls.backupHelp.innerHTML = `
+function showSettingsSuccess(message: string): void {
+  controls.settingsHelp.classList.add("success");
+  controls.settingsHelp.innerHTML = `
     <span class="status-check" aria-hidden="true">
       <svg viewBox="0 0 16 16">
         <path d="M3.2 8.4 6.4 11.6 12.8 4.8"></path>
@@ -673,14 +672,14 @@ function showBackupSuccess(message: string): void {
   `;
 }
 
-function setBackupHelp(message: string): void {
-  controls.backupHelp.classList.remove("success");
-  controls.backupHelp.textContent = message;
+function setSettingsHelp(message: string): void {
+  controls.settingsHelp.classList.remove("success");
+  controls.settingsHelp.textContent = message;
 }
 
-function clearBackupError(): void {
-  controls.backupError.textContent = "";
-  controls.backupError.hidden = true;
+function clearSettingsError(): void {
+  controls.settingsError.textContent = "";
+  controls.settingsError.hidden = true;
 }
 
 function toggleFavorite(title: string): void {
@@ -710,7 +709,7 @@ function toggleFavoriteWithoutScrollJump(button: HTMLButtonElement): void {
 
 function readStoredFavorites(): Set<string> {
   try {
-    const raw = window.localStorage.getItem(FAVORITES_KEY) ?? window.localStorage.getItem(LEGACY_PINS_KEY);
+    const raw = window.localStorage.getItem(FAVORITES_KEY);
     const parsed = raw ? JSON.parse(raw) : [];
     return new Set(Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : []);
   } catch {
