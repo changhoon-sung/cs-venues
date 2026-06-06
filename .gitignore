@@ -5,6 +5,11 @@ node_modules/
 dist/
 public/data/
 
+# Playwright
+test-results/
+playwright-report/
+.playwright/
+
 # Local caches and tooling
 .cache/
 .vite/

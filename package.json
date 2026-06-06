@@ -14,12 +14,18 @@
     "prebuild": "npm run data:build",
     "build": "tsc && vite build",
     "build:latest": "npm run data:sync && npm run build",
-    "preview": "vite preview --host 127.0.0.1"
+    "preview": "vite preview --host 127.0.0.1",
+    "test:e2e": "playwright test",
+    "test:lighthouse": "npm run build && node tests/lighthouse/run-lighthouse.mjs"
   },
   "dependencies": {
+    "preact": "^10.29.2",
     "yaml": "^2.8.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@preact/preset-vite": "^2.10.5",
+    "lighthouse": "^13.3.0",
     "typescript": "^5.9.3",
     "vite": "^7.3.1"
   }

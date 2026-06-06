@@ -1,0 +1,5 @@
+User-agent: *
+Disallow:
+Allow: /
+
+Sitemap: https://cs-venues.hooniverse.net/sitemap.xml

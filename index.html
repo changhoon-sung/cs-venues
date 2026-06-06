@@ -24,9 +24,27 @@
     <link rel="canonical" href="https://cs-venues.hooniverse.net/" />
     <title>CS Venues</title>
     <link rel="icon" type="image/svg+xml" href="%BASE_URL%favicon.svg" />
+    <!--
+      Theme boot: resolve and apply the theme before first paint to avoid a
+      flash. This is the single source of truth for initial theme resolution;
+      readInitialUiState() in src/url-state.ts reads the result back off
+      document.documentElement.dataset. Keep the rule (URL ?theme= wins over the
+      system preference) here only.
+    -->
+    <script>
+      (function () {
+        var t = new URLSearchParams(location.search).get("theme");
+        var explicit = t === "light" || t === "dark";
+        var root = document.documentElement;
+        root.dataset.theme = explicit
+          ? t
+          : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        if (explicit) root.dataset.themeExplicit = "1";
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

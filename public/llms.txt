@@ -1,0 +1,24 @@
+# CS Venues
+
+> CS Venues is a single-page reference table for computer science conference venues, CORE rankings, submission deadlines, favorite venues, and local-time countdowns.
+
+The canonical page is `https://cs-venues.hooniverse.net/`. URL query parameters such as `q`, `area`, `core`, `sort`, `dir`, and `theme` represent filtered or personalized views of the same application state and should be treated as alternate views of the canonical page.
+
+The application uses the CCFDDL conference deadline dataset and CORE conference rankings. Deadline times are displayed in the browser's local timezone.
+
+## Primary Resources
+
+- [CS Venues](https://cs-venues.hooniverse.net/): Canonical interactive reference table for CS conference venues, ranks, deadlines, favorites, and local-time countdowns.
+- [Conference data JSON](https://cs-venues.hooniverse.net/data/conferences.json): Machine-readable venue, ranking, deadline, location, and acceptance-rate data used by the application.
+- [XML sitemap](https://cs-venues.hooniverse.net/sitemap.xml): Canonical URL submitted for search indexing.
+- [robots.txt](https://cs-venues.hooniverse.net/robots.txt): Crawl policy for search engines and other automated clients.
+
+## Source Data
+
+- [CCFDDL dataset](https://github.com/ccfddl/ccf-deadlines): Upstream conference deadline data.
+- [CORE conference ranks](https://portal.core.edu.au/conf-ranks/): Upstream CORE conference ranking source.
+
+## Optional
+
+- [Project repository](https://github.com/changhoon-sung/cs-venues): Source code for the CS Venues web application.
+- [Author profile](https://github.com/changhoon-sung): Maintainer profile.
