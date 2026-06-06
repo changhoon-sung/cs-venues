@@ -1,5 +1,6 @@
 import { formatLocal, formatRemaining } from "../deadlines";
 import { AREA_NAMES, type AcceptanceRate as AcceptanceRateValue, type ViewRow } from "../types";
+import { CalendarIcon, StarIcon } from "./icons";
 
 export function VenueRow(props: {
   row: ViewRow;
@@ -31,7 +32,9 @@ export function VenueRow(props: {
               aria-label={props.favorite ? "Remove favorite" : "Add favorite"}
               title={props.favorite ? "Remove favorite" : "Add favorite"}
               onClick={(event) => props.onToggleFavorite(venue.title, event.currentTarget)}
-            />
+            >
+              <StarIcon />
+            </button>
           </div>
           <div class="venue-tags">
             <button type="button" class="area-label" onClick={() => props.onAreaFilter(venue.sub)}>{AREA_NAMES[venue.sub] ?? venue.sub}</button>
@@ -48,7 +51,9 @@ export function VenueRow(props: {
             <span class={`remaining ${props.row.status} ${soon ? "soon" : ""}`}>{remaining}</span>
             {deadline && props.row.status === "upcoming"
               ? (
-                <button type="button" class="calendar-button" aria-label={`Add ${venue.title} deadline to calendar`} title="Add to calendar" onClick={() => props.onCalendar(venue.title)} />
+                <button type="button" class="calendar-button" aria-label={`Add ${venue.title} deadline to calendar`} title="Add to calendar" onClick={() => props.onCalendar(venue.title)}>
+                  <CalendarIcon />
+                </button>
               )
               : null}
           </div>
