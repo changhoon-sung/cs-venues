@@ -1,4 +1,4 @@
-import "./styles.css";
+import styles from "./styles.css?inline";
 import { render } from "preact";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks";
 import { calendarFile } from "./calendar";
@@ -34,7 +34,14 @@ if (!root) {
   throw new Error("Missing #app root");
 }
 
+installStyles();
 render(<App />, root);
+
+function installStyles(): void {
+  const style = document.createElement("style");
+  style.textContent = styles;
+  document.head.append(style);
+}
 
 function App() {
   const initial = useMemo(() => readInitialUiState(), []);
