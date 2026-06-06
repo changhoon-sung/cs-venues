@@ -34,7 +34,6 @@ export type Venue = {
   sub: string;
   rank: Rank;
   dblp: string;
-  sourceFile: string;
   acceptanceRate?: AcceptanceRate;
   confs: ConferenceYear[];
 };

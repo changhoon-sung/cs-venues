@@ -1,5 +1,5 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { join, relative } from "node:path";
+import { join } from "node:path";
 import { parse } from "yaml";
 import { globSync, statSync } from "node:fs";
 
@@ -42,7 +42,6 @@ for (const file of files) {
         thcpl: string(entry.rank?.thcpl || "N"),
       },
       dblp: string(entry.dblp),
-      sourceFile: relative(root, join(root, file)),
       acceptanceRate: acceptRates.get(normalizeTitle(entry.title)),
       confs: Array.isArray(entry.confs)
         ? entry.confs
@@ -70,15 +69,11 @@ for (const file of files) {
 await mkdir(join(root, "public/data"), { recursive: true });
 await writeFile(
   join(root, "public/data/conferences.json"),
-  `${JSON.stringify(
-    {
-      generatedAt: new Date().toISOString(),
-      source: "https://github.com/ccfddl/ccf-deadlines",
-      venues,
-    },
-    null,
-    2,
-  )}\n`,
+  `${JSON.stringify({
+    generatedAt: new Date().toISOString(),
+    source: "https://github.com/ccfddl/ccf-deadlines",
+    venues,
+  })}\n`,
 );
 
 console.log(`Built public/data/conferences.json with ${venues.length} venues from ${files.length} YAML files.`);
