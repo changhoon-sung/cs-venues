@@ -26,11 +26,12 @@ try {
   });
   pipeOnFailure(preview, "preview");
 
-  const url = `http://127.0.0.1:${previewPort}/`;
+  const origin = `http://127.0.0.1:${previewPort}/`;
+  const url = `${origin}?q=&area=all&core=all&sort=remaining&dir=asc`;
   await waitForUrl(url);
-  await waitForUrl(`${url}robots.txt`);
-  await waitForUrl(`${url}llms.txt`);
-  await waitForUrl(`${url}sitemap.xml`);
+  await waitForUrl(`${origin}robots.txt`);
+  await waitForUrl(`${origin}llms.txt`);
+  await waitForUrl(`${origin}sitemap.xml`);
 
   chrome = spawn(await lighthouseChromePath(), [
     "--headless",

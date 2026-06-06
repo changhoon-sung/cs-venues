@@ -660,14 +660,11 @@ tbody tr:hover {
   cursor: pointer;
 }
 
-.favorite svg {
+.favorite::before {
+  content: "☆";
   display: block;
-  width: 13px;
-  height: 13px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.25;
-  stroke-linejoin: round;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .favorite:hover,
@@ -680,8 +677,8 @@ tbody tr:hover {
   color: var(--favorite);
 }
 
-.favorite.active svg {
-  fill: currentColor;
+.favorite.active::before {
+  content: "★";
 }
 
 .venue-tags {
@@ -799,14 +796,12 @@ tbody tr:hover {
   outline: none;
 }
 
-.calendar-button svg {
+.calendar-button::before {
+  content: "";
   width: 15px;
   height: 15px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  background: currentColor;
+  clip-path: path("M5 1v3H3.5A2.5 2.5 0 0 0 1 6.5v7A2.5 2.5 0 0 0 3.5 16h9a2.5 2.5 0 0 0 2.5-2.5v-7A2.5 2.5 0 0 0 12.5 4H11V1H9v3H7V1H5Zm-2 7h12v5.5A.5.5 0 0 1 14.5 14h-11a.5.5 0 0 1-.5-.5V8Z");
 }
 
 .deadline-local {

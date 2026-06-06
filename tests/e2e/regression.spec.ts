@@ -98,6 +98,24 @@ test.describe("favorites", () => {
   });
 });
 
+test.describe("progressive rows", () => {
+  test.use({ viewport: { width: 430, height: 800 } });
+
+  test("loads all core=all rows as the user scrolls", async ({ page }) => {
+    await page.goto("/?q=&area=all&core=all&sort=remaining&dir=asc");
+    await expect(page.locator("#summary")).toContainText("Showing 349 venues");
+    await expect(page.locator("#rows tr")).toHaveCount(48);
+
+    for (let i = 0; i < 8; i++) {
+      await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+      if (await page.locator("#rows tr").count() === 349) break;
+      await page.waitForTimeout(80);
+    }
+
+    await expect(page.locator("#rows tr")).toHaveCount(349);
+  });
+});
+
 test.describe("theme", () => {
   test.use({ colorScheme: "dark" });
 
