@@ -10,7 +10,7 @@ import { VenueTable } from "./components/VenueTable";
 import { mountOrnament, type OrnamentHandle } from "./ornament";
 import { parseStorageSettings, serializeStorageSettings, settingsFilename, type SettingsExport } from "./settings";
 import { readStoredFavorites, writeStoredFavorites, writeStoredPreferences } from "./storage";
-import { AREA_NAMES, type Dataset, type FavoriteLayout, type SortDirection, type SortKey, type ThemeMode, type ViewRow } from "./types";
+import { AREA_NAMES, type Dataset, type FavoriteLayout, type SortDirection, type SortKey, type ThemeMode } from "./types";
 import { currentStoredPreferences, preferredTheme, readInitialUiState, writeUrl } from "./url-state";
 import { favoriteRows, filteredRows } from "./venue-view-model";
 
@@ -33,9 +33,6 @@ const root = document.querySelector<HTMLDivElement>("#app");
 if (!root) {
   throw new Error("Missing #app root");
 }
-
-const INITIAL_ROW_LIMIT = 48;
-const ROW_RENDER_BATCH = 96;
 
 installStyles();
 render(<App />, root);
@@ -86,7 +83,6 @@ function App() {
     () => dataset ? filteredRows({ dataset, now, query, areas, coreRanks, sort, sortDirection }) : [],
     [dataset, now, query, areas, coreRanks, sort, sortDirection],
   );
-  const visibleRows = useProgressiveRows(rows);
   const favoriteVenueRows = useMemo(
     () => dataset ? favoriteRows({ dataset, now, favoriteVenues, sort, sortDirection }) : [],
     [dataset, now, favoriteVenues, sort, sortDirection],
@@ -448,7 +444,7 @@ function App() {
           </section>
 
           <VenueTable
-            rows={visibleRows}
+            rows={rows}
             rowsRef={rowsRef}
             timezone={timezone}
             sort={sort}
@@ -522,30 +518,4 @@ function CheckboxPill(props: {
       <span>{props.label}</span>
     </label>
   );
-}
-
-function useProgressiveRows(rows: ViewRow[]): ViewRow[] {
-  const [visibleCount, setVisibleCount] = useState(INITIAL_ROW_LIMIT);
-
-  useEffect(() => {
-    setVisibleCount(Math.min(INITIAL_ROW_LIMIT, rows.length));
-    if (rows.length <= INITIAL_ROW_LIMIT) return;
-
-    const growIfNeeded = () => {
-      const remainingScroll = document.documentElement.scrollHeight - window.scrollY - window.innerHeight;
-      if (remainingScroll > 1200) return;
-      setVisibleCount((current) => Math.min(current + ROW_RENDER_BATCH, rows.length));
-    };
-
-    window.addEventListener("scroll", growIfNeeded, { passive: true });
-    window.addEventListener("resize", growIfNeeded);
-    growIfNeeded();
-
-    return () => {
-      window.removeEventListener("scroll", growIfNeeded);
-      window.removeEventListener("resize", growIfNeeded);
-    };
-  }, [rows]);
-
-  return visibleCount >= rows.length ? rows : rows.slice(0, visibleCount);
 }
