@@ -1,6 +1,7 @@
 import styles from "./styles.css?inline";
 import { render } from "preact";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "preact/hooks";
+import { initAnalytics } from "./analytics";
 import { calendarFile } from "./calendar";
 import { nextDeadline } from "./deadlines";
 import { FavoriteVenues } from "./components/FavoriteVenues";
@@ -35,6 +36,7 @@ if (!root) {
 }
 
 installStyles();
+initAnalytics();
 render(<App />, root);
 
 function installStyles(): void {
