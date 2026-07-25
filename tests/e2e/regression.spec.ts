@@ -102,9 +102,14 @@ test.describe("venue rows", () => {
   test.use({ viewport: { width: 430, height: 800 } });
 
   test("renders all core=all rows immediately", async ({ page }) => {
+    const response = await page.request.get("/data/conferences.json");
+    expect(response.ok()).toBe(true);
+    const dataset = await response.json() as { venues: unknown[] };
+    const venueCount = dataset.venues.length;
+
     await page.goto("/?q=&area=all&core=all&sort=remaining&dir=asc");
-    await expect(page.locator("#summary")).toContainText("Showing 349 venues");
-    await expect(page.locator("#rows tr")).toHaveCount(349);
+    await expect(page.locator("#summary")).toContainText(`Showing ${venueCount} venues`);
+    await expect(page.locator("#rows tr")).toHaveCount(venueCount);
   });
 });
 
