@@ -15,7 +15,7 @@
           deadline: '2024-11-20 00:00:00'
       timezone: UTC-8
       date: April 23 - April 25, 2025
-      place: Bruges, Belgium
+      place: Bruges, Belgium and Online
     - year: 2026
       id: esann26
       link: https://www.esann.org/
@@ -23,4 +23,12 @@
         - deadline: '2025-11-19 23:59:59'
       timezone: UTC-8
       date: April 22 - 24, 2026
+      place: Bruges, Belgium and Online
+    - year: 2027
+      id: esann27
+      link: https://www.esann.org/
+      timeline:
+        - deadline: '2026-11-18 23:59:59'
+      timezone: UTC-8
+      date: April 21 - 23, 2027
       place: Bruges, Belgium and Online

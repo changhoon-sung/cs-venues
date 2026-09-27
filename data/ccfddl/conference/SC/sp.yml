@@ -7,6 +7,21 @@
     thcpl: A
   dblp: sp
   confs:
+    - year: 2021
+      id: sp21
+      link: https://www.ieee-security.org/TC/SP2021/
+      timeline:
+        - deadline: '2020-03-05 23:59:59'
+          comment: Spring cycle
+        - deadline: '2020-06-04 23:59:59'
+          comment: Summer cycle
+        - deadline: '2020-09-03 23:59:59'
+          comment: Fall cycle
+        - deadline: '2020-12-03 23:59:59'
+          comment: Winter cycle
+      timezone: UTC-12
+      date: May 24-26, 2021
+      place: Virtual
     - year: 2022
       id: sp22
       link: https://www.ieee-security.org/TC/SP2022/
@@ -61,9 +76,11 @@
       id: sp26
       link: https://www.ieee-security.org/TC/SP2026/
       timeline:
-        - deadline: '2025-06-05 23:59:59'
+        - abstract_deadline: '2025-05-29 23:59:59'
+          deadline: '2025-06-05 23:59:59'
           comment: First Paper submission deadline
-        - deadline: '2025-11-13 23:59:59'
+        - abstract_deadline: '2025-11-06 23:59:59'
+          deadline: '2025-11-13 23:59:59'
           comment: Second Paper submission deadline
       timezone: UTC-12
       date: MAY 18-21, 2026

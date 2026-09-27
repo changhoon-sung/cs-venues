@@ -19,8 +19,16 @@
       id: wowmom26
       link: https://www.cs.unibo.it/wowmom2026/
       timeline:
-        - abstract_deadline: '2025-11-18 23:59:59'
-          deadline: '2025-12-05 23:59:59'
-      timezone: AoE
+        - abstract_deadline: '2025-12-05 23:59:59'
+          deadline: '2025-12-15 23:59:59'
+      timezone: UTC-5
       date: June 16-19, 2026
       place: Bologna, Italy
+    - year: 2027
+      id: wowmom27
+      link: https://wowmom2027.dii.unipi.it/index.html
+      timeline:
+        - deadline: '2026-12-01 23:59:59'
+      timezone: AoE
+      date: June 21-24, 2027
+      place: Irvine, California, USA

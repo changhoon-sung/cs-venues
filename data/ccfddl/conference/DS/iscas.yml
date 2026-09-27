@@ -28,6 +28,6 @@
       link: https://2027.ieee-iscas.org/
       timeline:
         - deadline: '2026-10-13 23:59:59'
-      timezone: AoE
+      timezone: UTC-5
       date: June 6-9, 2027
       place: Bordeaux, France

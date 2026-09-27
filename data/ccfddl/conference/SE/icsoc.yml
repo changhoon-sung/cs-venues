@@ -13,8 +13,6 @@
       timeline:
         - deadline: '2022-03-01 23:59:59'
           comment: Abstracts/Full-Text Paper Submission Deadline
-        - deadline: '2022-04-23 23:59:59'
-          comment: Final Paper (Camera Ready) Submission & Early Bird Registration Deadline
       timezone: AoE
       date: May 26-27, 2022
       place: Barcelona, Spain
@@ -31,3 +29,15 @@
       timezone: AoE
       date: December 1-4, 2025
       place: Shenzhen, China
+    - year: 2026
+      id: icsoc26
+      link: https://icsoc2026.it.p.lodz.pl/
+      timeline:
+        - deadline: '2026-05-10 23:59:59'
+          comment: Early paper submissions
+        - abstract_deadline: '2026-07-12 23:59:59'
+          deadline: '2026-07-19 23:59:59'
+          comment: Regular papers
+      timezone: AoE
+      date: December 1-4, 2026
+      place: Lodz, Poland
