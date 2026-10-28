@@ -33,6 +33,7 @@ Upstream CCFDDL sync runs separately once a week through GitHub Actions.
 - `data/ccfddl/accept_rates/`: historical acceptance rates
 - `data/custom/conference/`: local venue additions that are merged into the generated dataset
 - `data/custom/accept_rates/`: local acceptance-rate additions
+- `data/overrides.json`: source-backed corrections keyed by conference ID, applied after sync during dataset generation
 - `scripts/build-dataset.mjs`: YAML to static JSON generator
 - `scripts/sync-dataset.mjs`: sparse sync from upstream CCFDDL
 

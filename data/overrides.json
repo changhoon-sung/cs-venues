@@ -1,0 +1,14 @@
+{
+  "mlsys27": {
+    "source": "https://mlsys.org/",
+    "reason": "Official deadline: October 30, 2026 at 12:00 PM PDT (UTC-7), which is 19:00 UTC. Upstream lists 20:00 UTC.",
+    "fields": {
+      "timezone": "UTC",
+      "timeline": [
+        {
+          "deadline": "2026-10-30 19:00:00"
+        }
+      ]
+    }
+  }
+}

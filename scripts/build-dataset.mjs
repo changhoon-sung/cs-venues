@@ -25,6 +25,7 @@ const acceptRateFiles = dataRoots
 const acceptRates = await readAcceptRates();
 
 const venues = [];
+const overrides = JSON.parse(await readFile(join(root, "data/overrides.json"), "utf8"));
 
 for (const file of files) {
   const raw = await readFile(join(root, file), "utf8");
@@ -45,21 +46,24 @@ for (const file of files) {
       acceptanceRate: acceptRates.get(normalizeTitle(entry.title)),
       confs: Array.isArray(entry.confs)
         ? entry.confs
-            .map((conf) => ({
-              year: Number(conf.year || 0),
-              id: string(conf.id),
-              link: string(conf.link),
-              timezone: string(conf.timezone || "UTC+0"),
-              date: string(conf.date),
-              place: string(conf.place),
-              timeline: Array.isArray(conf.timeline)
-                ? conf.timeline.map((item) => ({
-                    abstract_deadline: optionalString(item.abstract_deadline),
-                    deadline: optionalString(item.deadline),
-                    comment: optionalString(item.comment),
-                  }))
-                : [],
-            }))
+            .map((sourceConf) => {
+              const conf = { ...sourceConf, ...overrides[sourceConf.id]?.fields };
+              return {
+                year: Number(conf.year || 0),
+                id: string(conf.id),
+                link: string(conf.link),
+                timezone: string(conf.timezone || "UTC+0"),
+                date: string(conf.date),
+                place: string(conf.place),
+                timeline: Array.isArray(conf.timeline)
+                  ? conf.timeline.map((item) => ({
+                      abstract_deadline: optionalString(item.abstract_deadline),
+                      deadline: optionalString(item.deadline),
+                      comment: optionalString(item.comment),
+                    }))
+                  : [],
+              };
+            })
             .sort((a, b) => b.year - a.year)
         : [],
     });
